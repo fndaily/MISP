@@ -2,6 +2,11 @@
   $tr_class = 'darkOrangeRow';
   $linkClass = 'white';
   $currentType = 'denyForm';
+  if ($event['Event']['id'] != $object['event_id']) {
+    if (!$isSiteAdmin && $event['extensionEvents'][$object['event_id']]['Orgc']['id'] != $me['org_id']) {
+      $mayModify = false;
+    }
+  }
   if (!empty($objectContainer)) {
     if (!empty($child)) {
       if ($child === 'last') {
@@ -33,7 +38,7 @@
 <tr id = "proposal<?php echo '_' . $object['id'] . '_tr'; ?>" class="<?php echo $tr_class; ?>" <?php echo $identifier; ?>>
   <?php if ($mayModify): ?>
     <td style="width:10px;" data-position="<?php echo h($object['objectType']) . '_' . h($object['id']); ?>">
-      <input id = "select_proposal_<?php echo $object['id']; ?>" class="select_proposal row_checkbox" type="checkbox" data-id="<?php echo $object['id'];?>" />
+      <input id = "select_proposal_<?php echo $object['id']; ?>" class="select_proposal row_checkbox" type="checkbox" aria-label="<?php __('Select proposal');?>" data-id="<?php echo $object['id'];?>" />
     </td>
   <?php endif; ?>
   <td class="short context hidden">
@@ -52,12 +57,21 @@
       ?>
     </div>
   </td>
+  <?php
+    if ($extended):
+  ?>
+    <td class="short">
+      <?php echo '<a href="' . $baseurl . '/events/view/' . h($object['event_id']) . '" class="white">' . h($object['event_id']) . '</a>'; ?>
+    </td>
+  <?php
+    endif;
+  ?>
   <td class="short">
-<?php
+  <?php
     if (isset($object['Org']['name'])) {
       echo $this->OrgImg->getOrgImg(array('name' => $object['Org']['name'], 'id' => $object['Org']['id'], 'size' => 24));
     }
-?>
+  ?>
   </td>
   <td class="short">
     <div id = "<?php echo $currentType . '_' . $object['id'] . '_category_placeholder'; ?>" class = "inline-field-placeholder"></div>
@@ -93,26 +107,13 @@
               foreach ($object['warnings'][$component] as $warning) $temp .= '<span class=\'bold\'>' . h($valueParts[$valuePart]) . '</span>: <span class=\'red\'>' . h($warning) . '</span><br />';
             }
           }
-          echo ' <span class="icon-warning-sign icon-white" data-placement="right" data-toggle="popover" data-content="' . h($temp) . '" data-trigger="hover">&nbsp;</span>';
+          echo ' <span aria-label="' . __('warning') . '" role="img" tabindex="0" class="fa fa-exclamation-triangle white" data-placement="right" data-toggle="popover" data-content="' . h($temp) . '" data-trigger="hover">&nbsp;</span>';
         }
       ?>
     </div>
   </td>
-  <td class="shortish">
-    <?php
-      if ($object['objectType'] == 0):
-    ?>
-      <div class="attributeTagContainer">
-        &nbsp;
-      </div>
-    <?php
-      else:
-    ?>
-      &nbsp;
-    <?php
-      endif;
-    ?>
-  </td>
+  <td class="shortish">&nbsp;</td>
+  <td class="shortish">&nbsp;</td>
   <td class="showspaces bitwider">
     <div id = "<?php echo $currentType . '_' . $object['id'] . '_comment_placeholder'; ?>" class = "inline-field-placeholder"></div>
     <div id = "<?php echo $currentType . '_' . $object['id'] . '_comment_solid'; ?>" class="inline-field-solid" ondblclick="activateField('<?php echo $currentType; ?>', '<?php echo $object['id']; ?>', 'comment', <?php echo $event['Event']['id'];?>);">
@@ -124,18 +125,11 @@
     <ul class="inline" style="margin:0px;">
       <?php
         if (!empty($event['RelatedShadowAttribute'][$object['id']])) {
-          foreach ($event['RelatedShadowAttribute'][$object['id']] as $relatedAttribute) {
-            $relatedData = array('Event info' => $relatedAttribute['info'], 'Correlating Value' => $relatedAttribute['value'], 'date' => isset($relatedAttribute['date']) ? $relatedAttribute['date'] : 'N/A');
-            $popover = '';
-            foreach ($relatedData as $k => $v) {
-              $popover .= '<span class=\'bold black\'>' . h($k) . '</span>: <span class="blue">' . h($v) . '</span><br />';
-            }
-            echo '<li style="padding-right: 0px; padding-left:0px;" data-toggle="popover" data-content="' . h($popover) . '" data-trigger="hover"><span>';
-            $correlationClass = 'white' . ($relatedAttribute['org_id'] == $me['org_id'] ? ' bold' : '');
-            echo $this->Html->link($relatedAttribute['id'], array('controller' => 'events', 'action' => 'view', $relatedAttribute['id'], true, $event['Event']['id']), array('class' => $correlationClass));
-            echo "</span></li>";
-            echo ' ';
-          }
+          echo $this->element('Events/View/attribute_correlations', array(
+            'scope' => 'ShadowAttribute',
+            'object' => $object,
+            'event' => $event,
+          ));
         }
       ?>
     </ul>
@@ -180,6 +174,9 @@
   <td class="shortish">&nbsp;</td>
   <td class="shortish">&nbsp;</td>
   <td class="short">&nbsp;</td>
+  <?php if (!empty($includeDecayScore)): ?>
+    <td class="decayingScoreField">&nbsp;</td>
+  <?php endif; ?>
   <td class="short action-links">
     <?php
         if (($event['Orgc']['id'] == $me['org_id'] && $mayModify) || $isSiteAdmin) {
@@ -191,7 +188,7 @@
         }
         if (($event['Orgc']['id'] == $me['org_id'] && $mayModify) || $isSiteAdmin || ($object['org_id'] == $me['org_id'])) {
         ?>
-          <span class="icon-trash icon-white useCursorPointer" title="<?php echo __('Discard proposal');?>" role="button" tabindex="0" aria-label="<?php echo __('Discard proposal');?>" onClick="deleteObject('shadow_attributes', 'discard' ,'<?php echo $object['id']; ?>', '<?php echo $event['Event']['id']; ?>');"></span>
+          <span class="fa fa-trash icon-white useCursorPointer" title="<?php echo __('Discard proposal');?>" role="button" tabindex="0" aria-label="<?php echo __('Discard proposal');?>" onClick="deleteObject('shadow_attributes', 'discard' ,'<?php echo $object['id']; ?>', '<?php echo $event['Event']['id']; ?>');"></span>
         <?php
         }
     ?>

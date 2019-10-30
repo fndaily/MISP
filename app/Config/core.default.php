@@ -76,6 +76,7 @@ Configure::write('Exception', array(
 	'log'      => true,
 	'skipLog'  => array(
 		'NotFoundException',
+		'ForbiddenException',
 	)
 ));
 
@@ -177,8 +178,10 @@ define('LOG_ERROR', LOG_ERR);
  */
 Configure::write('Session', array(
 	'timeout'        => 60,    // Session timeout, default is 1 hour
+	'cookie_timeout' => 10080 ,  // Cookie timeout, default is 1 week
 	'defaults'       => 'php',
-	'autoRegenerate' => true
+	'autoRegenerate' => false,
+	'checkAgent' => false
 ));
 
 /**

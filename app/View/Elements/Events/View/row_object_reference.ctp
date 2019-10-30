@@ -22,7 +22,13 @@
 <?php
   endif;
 ?>
-<span class="fa fa-plus-square useCursorPointer" title="<?php echo __('Add reference');?>" role="button" tabindex="0" aria-label="<?php echo __('Add reference');?>" onClick="genericPopup('<?php echo '/objectReferences/add/' . h($object['id']);?>', '#popover_form');"></span>
+<?php
+  if ($mayModify):
+?>
+    <span class="fa fa-plus-square useCursorPointer" title="<?php echo __('Add reference');?>" role="button" tabindex="0" aria-label="<?php echo __('Add reference');?>" onClick="genericPopup('<?php echo '/objectReferences/add/' . h($object['id']);?>', '#popover_form');"></span>
+<?php
+  endif;
+?>
 <div id="Object_<?php echo $object['id']; ?>_references_collapsible" class="collapse">
 <?php
   foreach ($object['ObjectReference'] as $reference):
@@ -42,7 +48,7 @@
     <a class="bold white useCursorPointer <?php echo $reference['deleted'] ? 'strikethrough' : ''; ?>" onClick="pivotObjectReferences('<?php echo h($currentUri); ?>', '<?php echo $uuid; ?>')">
       <?php echo h($reference['relationship_type']) . ' ' . $objectType . ' ' . $reference['referenced_id'] . h($output);?>
     </a>
-    <span class="icon-trash icon-white useCursorPointer" title="<?php echo __('Delete object reference');?>" role="button" tabindex="0" aria-label="<?php echo __('Delete object reference');?>" onClick="deleteObject('object_references', 'delete', '<?php echo h($idref); ?>', '<?php echo h($event['Event']['id']); ?>');"></span>
+    <span class="fa fa-trash icon-white useCursorPointer" title="<?php echo __('Delete object reference');?>" role="button" tabindex="0" aria-label="<?php echo __('Delete object reference');?>" onClick="deleteObject('object_references', 'delete', '<?php echo h($idref); ?>', '<?php echo h($event['Event']['id']); ?>');"></span>
     <br />
 <?php
   endforeach;
